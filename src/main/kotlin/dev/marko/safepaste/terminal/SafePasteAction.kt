@@ -32,10 +32,10 @@ class SafePasteAction : DumbAwareAction() {
             .filter { it.isNotBlank() }
 
         if (lines.size < 2) {
-            // Single line paste — let it through as-is
             println("=== Single line paste, no interception needed ===")
-            // TODO v1: delegate to default paste behavior
-            log.debug("Single line paste, no interception needed")
+            terminalView.createSendTextBuilder()
+                .useBracketedPasteMode()
+                .send(clipboardText)
             return
         }
 
