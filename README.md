@@ -1,3 +1,134 @@
+# Safe Paste
+
+An IntelliJ IDEA plugin that intercepts multiline clipboard pastes into the terminal and warns you before potentially dangerous commands get executed.
+
+---
+
+## The Problem
+
+You copy a snippet from the web or your notes and multiple lines of code or commands. You paste it into the terminal. Shell executes every line instantly. Things break.
+
+This is especially dangerous in PowerShell where a newline is enough to trigger execution.
+
+---
+
+## What Safe Paste Does
+
+Safe Paste overrides the default `Terminal.Paste` action (`Ctrl+V`) and intercepts any paste that contains **2 or more non-blank lines**.
+
+Instead of blindly dumping everything into your shell, it shows a dialog:
+
+```
+Warning: Multiline Paste
+
+You are about to paste text that contains 3 lines.
+If pasted directly into your shell, this may result in unexpected execution of commands.
+
+Clipboard contents (preview):
+┌─────────────────────────────────┐
+│ git init                        │
+│ git add .                       │
+│ git commit                      │
+└─────────────────────────────────┘
+
+[ Paste as Plain Text ]  [ Paste Anyway ]  [ Cancel ]
+```
+
+### Options
+
+| Option | Behavior |
+|--------|----------|
+| **Paste as Plain Text** | Pastes all lines into the prompt using PowerShell line continuation (`` ` ``). Lines appear in your prompt for review — you press Enter when ready. |
+| **Paste Anyway** | Executes each line immediately, one by one. Same as normal paste. |
+| **Cancel** | Does nothing. Clipboard contents are not pasted. |
+
+Single-line pastes are passed through instantly with no dialog.
+
+---
+
+## Installation
+
+1. Open IntelliJ IDEA
+2. Go to **Settings → Plugins → Marketplace**
+3. Search for **Safe Paste**
+4. Click **Install**
+
+Or install manually from a `.zip`:
+
+1. Download the latest release from [Releases](../../releases)
+2. Go to **Settings → Plugins → ⚙️ → Install Plugin from Disk**
+3. Select the downloaded `.zip`
+
+---
+
+## Requirements
+
+- IntelliJ IDEA 2024.1 or later
+- The **new terminal** (reworked engine) must be enabled — the plugin uses `com.intellij.terminal.frontend.view.TerminalView` which is part of the new terminal frontend
+
+---
+
+## Compatibility
+
+| Shell | Paste as Plain Text |
+|-------|-------------------|
+| PowerShell | Uses `` ` `` line continuation |
+| bash / zsh | May vary — bracketed paste mode behavior depends on shell config |
+| cmd | Not tested yet |
+
+---
+
+## Building from Source
+
+```bash
+git clone https://github.com/yourname/safe-paste
+cd safe-paste
+./gradlew buildPlugin
+```
+
+The plugin `.zip` will be in `build/distributions/`.
+
+To run in a sandboxed IDE:
+
+```bash
+./gradlew runIde
+```
+
+---
+
+## How It Works
+
+Safe Paste registers itself as an override of the built-in `Terminal.Paste` action via `plugin.xml`:
+
+```xml
+<action id="Terminal.Paste"
+        class="dev.marko.safepaste.terminal.SafePasteAction"
+        overrides="true"
+        text="Safe Paste">
+</action>
+```
+
+On paste, it:
+1. Reads clipboard contents
+2. Counts non-blank lines
+3. If 1 line → passes through normally
+4. If 2+ lines → shows the warning dialog
+5. Based on user choice → sends text via `TerminalView.createSendTextBuilder()`
+
+For **Paste as Plain Text**, each line except the last is sent with a trailing `` ` `` (PowerShell continuation character) and executed, placing the cursor on the next continuation line. The final line is sent without execution, waiting for the user to press Enter.
+
+---
+
+## Contributing
+
+PRs and issues welcome. This is an early version, shell compatibility and edge cases are the main areas that need work.
+
+---
+
+## License
+
+MIT
+
 # IntelliJ Platform Plugin Template
 
 [![Twitter Follow](https://img.shields.io/badge/follow-%40JBPlatform-1DA1F2?logo=twitter)](https://twitter.com/JBPlatform)
