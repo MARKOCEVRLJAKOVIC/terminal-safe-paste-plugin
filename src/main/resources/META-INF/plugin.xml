@@ -1,0 +1,21 @@
+<idea-plugin>
+    <id>dev.marko.safe-paste</id>
+    <name>Safe Paste</name>
+    <vendor url="https://www.yourcompany.com">YourCompany</vendor>
+    <description><![CDATA[
+        Enter short description for your plugin here.<br>
+        <em>most HTML tags may be used</em>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>org.jetbrains.plugins.terminal</depends>
+
+    <resource-bundle>messages.MyMessageBundle</resource-bundle>
+    <actions>
+        <action id="Terminal.Paste"
+                class="dev.marko.safepaste.terminal.SafePasteAction"
+                overrides="true"
+                text="Safe Paste">
+        </action>
+    </actions>
+</idea-plugin>
