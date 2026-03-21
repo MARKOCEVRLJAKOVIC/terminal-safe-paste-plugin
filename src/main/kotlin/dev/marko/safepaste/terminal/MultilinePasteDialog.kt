@@ -68,7 +68,9 @@ class MultilinePasteDialog(
         return object : DialogWrapperAction(label) {
             override fun doAction(e: ActionEvent) {
                 choice = result
+                val owner = window.owner
                 close(OK_EXIT_CODE)
+                owner?.requestFocus()
             }
         }
     }
