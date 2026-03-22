@@ -2,7 +2,6 @@ package dev.marko.safepaste.terminal
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -38,16 +37,15 @@ class SafePasteAction : DumbAwareAction() {
         }
 
         // Multiline paste detected, show warning dialog before proceeding
-        ApplicationManager.getApplication().invokeLater {
-            val dialog = MultilinePasteDialog(lines)
-            dialog.show()
-            when (dialog.choice) {
-                MultilinePasteDialog.Choice.PASTE_AS_PLAIN_TEXT -> terminalView.pasteAsPlainText(lines)
-                MultilinePasteDialog.Choice.PASTE_ANYWAY -> terminalView.pasteAndExecute(lines)
-                MultilinePasteDialog.Choice.CANCEL -> Unit
-            }
+        val dialog = MultilinePasteDialog(lines)
+        dialog.show()
+        when (dialog.choice) {
+            MultilinePasteDialog.Choice.PASTE_AS_PLAIN_TEXT -> terminalView.pasteAsPlainText(clipboardText)
+            MultilinePasteDialog.Choice.PASTE_ANYWAY -> terminalView.pasteAndExecute(lines)
+            MultilinePasteDialog.Choice.CANCEL -> Unit
         }
     }
+
 
     private fun clipboardText(): String? =
         CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor)
@@ -58,13 +56,13 @@ class SafePasteAction : DumbAwareAction() {
      * Uses bracketed paste mode when the shell supports it (bash, zsh, fish).
      * Falls back to sendString via reflection for shells that don't support it (PowerShell).
      */
-    private fun TerminalView.pasteAsPlainText(lines: List<String>) {
+    private fun TerminalView.pasteAsPlainText(text: String) {
         if (isBracketedPasteModeActive()) {
             createSendTextBuilder()
                 .useBracketedPasteMode()
-                .send(lines.joinToString("\n"))
+                .send(text)
         } else {
-            sendStringViaReflection(lines.joinToString("\n"))
+            sendStringViaReflection(text)
         }
     }
 
@@ -87,9 +85,17 @@ class SafePasteAction : DumbAwareAction() {
             .getMethod("getTerminalState")
             .invoke(sessionModel)
 
-        val stateValue = terminalState.javaClass
-            .getMethod("getValue")
-            .invoke(terminalState)
+        val stateValue = terminalState.javaClass.interfaces
+            .firstOrNull { it.name == "kotlinx.coroutines.flow.StateFlow" }
+            ?.getMethod("getValue")
+            ?.also { it.isAccessible = true }
+            ?.invoke(terminalState)
+            ?: run {
+                // fallback
+                Class.forName("kotlinx.coroutines.flow.StateFlow")
+                    .getMethod("getValue")
+                    .invoke(terminalState)
+            }
 
         stateValue.javaClass
             .getMethod("isBracketedPasteMode")
@@ -112,7 +118,7 @@ class SafePasteAction : DumbAwareAction() {
      */
     private fun TerminalView.sendStringViaReflection(text: String) {
         try {
-            val terminalInput = javaClass.getDeclaredField("terminalInput")
+            val terminalInput = this::class.java.getDeclaredField("terminalInput")
                 .also { it.isAccessible = true }
                 .get(this)
 
@@ -121,7 +127,9 @@ class SafePasteAction : DumbAwareAction() {
                 .also { it.isAccessible = true }
                 .invoke(terminalInput, text)
         } catch (ex: Exception) {
-            log.error("Failed to send text via reflection", ex)
+            log.error("Failed to send text via reflection, falling back to default send", ex)
+            // fallback
+            createSendTextBuilder().useBracketedPasteMode().send(text)
         }
     }
 

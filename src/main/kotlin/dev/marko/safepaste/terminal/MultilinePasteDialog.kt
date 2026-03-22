@@ -42,7 +42,7 @@ class MultilinePasteDialog(
         val previewText = lines.joinToString("\n")
         val textArea = JBTextArea(previewText).apply {
             isEditable = false
-            rows = minOf(lines.size, 10)
+            rows = minOf(lines.size, 10).coerceAtLeast(1)
             columns = 60
             font = JBUI.Fonts.create("JetBrains Mono", 12) ?: font.deriveFont(12f)
         }
@@ -68,9 +68,7 @@ class MultilinePasteDialog(
         return object : DialogWrapperAction(label) {
             override fun doAction(e: ActionEvent) {
                 choice = result
-                val owner = window.owner
-                close(OK_EXIT_CODE)
-                owner?.requestFocus()
+                close(CANCEL_EXIT_CODE)
             }
         }
     }
