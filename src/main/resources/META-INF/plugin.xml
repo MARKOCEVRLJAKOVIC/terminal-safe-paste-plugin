@@ -1,39 +1,50 @@
 <idea-plugin>
     <id>dev.marko.safe-paste</id>
     <name>Safe Paste</name>
-    <vendor email="marecevrljakovic@gmail.com" url="https://github.com/markocevrljakovic">Marko Cevrljakovic</vendor>
-    <description><![CDATA[Prevents accidental execution of multiline commands when pasting into the terminal.
+    <version>1.0.0</version>
 
-    <p>
-    When using shells like PowerShell that do not support bracketed paste mode,
-    pasting multiple lines can immediately execute each line as a separate command.
-    </p>
+    <vendor email="marecevrljakovic@gmail.com" url="https://github.com/markocevrljakovic">
+        Marko Cevrljakovic
+    </vendor>
 
-    <p>
-    Safe Paste intercepts multiline paste operations and lets you choose:
-    <ul>
-      <li><b>Paste as Plain Text</b> – safe, non-executing paste</li>
-      <li><b>Paste Anyway</b> – execute commands line by line</li>
-      <li><b>Cancel</b> – abort paste</li>
-    </ul>
-    </p>
+    <idea-version since-build="243" until-build="251.*"/>
 
-    <p>
-    Single-line paste remains unchanged.
-    </p>
+    <description><![CDATA[
+        Prevents accidental execution of multiline commands when pasting into the terminal.
+
+        <p>
+        When using shells like PowerShell that do not support bracketed paste mode,
+        pasting multiple lines can immediately execute each line as a separate command.
+        </p>
+
+        <p>
+        Safe Paste intercepts multiline paste operations and lets you choose:
+        <ul>
+          <li><b>Paste as Plain Text</b> – safe, non-executing paste</li>
+          <li><b>Paste Anyway</b> – execute commands line by line</li>
+          <li><b>Cancel</b> – abort paste</li>
+        </ul>
+        </p>
+
+        <p>Single-line paste remains unchanged.</p>
+
+        <p><b>Note:</b> Requires the new terminal (Gen 2), available in IntelliJ IDEA 2024.2+.
+        Make sure "Enable New Terminal" is active in Settings → Tools → Terminal.</p>
     ]]></description>
+
+    <change-notes><![CDATA[
+        <ul>
+            <li><b>1.0.0</b> – Initial release</li>
+        </ul>
+    ]]></change-notes>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>org.jetbrains.plugins.terminal</depends>
 
-
-    <resource-bundle>messages.MyMessageBundle</resource-bundle>
     <actions>
         <action id="Terminal.Paste"
                 class="dev.marko.safepaste.terminal.SafePasteAction"
-                overrides="true"
-                text="SafePaste Terminal">
+                overrides="true">
         </action>
-
     </actions>
 </idea-plugin>

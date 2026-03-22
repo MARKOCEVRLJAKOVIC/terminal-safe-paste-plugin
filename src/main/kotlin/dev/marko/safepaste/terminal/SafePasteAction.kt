@@ -18,20 +18,39 @@ import java.awt.datatransfer.DataFlavor
  * Background: PowerShell does not support bracketed paste mode, so pasting multiline text
  * via Ctrl+V causes each line to be executed immediately as a separate command. This action
  * prevents that by routing multiline pastes through a safer code path.
+ *
+ * Note: Relies on [TerminalViewAccessor] which uses reflection against internal IDE APIs.
+ * This may break on future IDE updates — failures are logged as warnings and fall back
+ * to safe defaults.
  */
 class SafePasteAction : DumbAwareAction() {
 
-    override fun actionPerformed(e: AnActionEvent) {
-        val view = e.getData(TerminalView.DATA_KEY) ?: return
-        val text = clipboardText() ?: return
-        val lines = text.lines().filter { it.isNotBlank() }
+    companion object {
+        private val LOG = logger<SafePasteAction>()
 
-        if (lines.size < 2) {
+        /**
+         * Returns true if the given text contains two or more non-blank lines,
+         * meaning it requires user confirmation before pasting.
+         * Extracted for testability.
+         */
+        internal fun requiresConfirmation(text: String): Boolean =
+            text.lines().count { it.isNotBlank() } >= 2
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+        val view = e.getData(TerminalView.DATA_KEY) ?: run {
+            LOG.warn("SafePaste: TerminalView not available in current context")
+            return
+        }
+        val text = clipboardText() ?: return
+
+        if (!requiresConfirmation(text)) {
             PasteStrategy.BracketedPaste.execute(view, text)
             return
         }
 
-        when (MultilinePasteDialog(lines).also { it.show() }.choice) {
+        val dialog = MultilinePasteDialog(text).also { it.show() }
+        when (dialog.choice) {
             MultilinePasteDialog.Choice.PASTE_AS_PLAIN_TEXT -> PasteStrategy.forShell(view).execute(view, text)
             MultilinePasteDialog.Choice.PASTE_ANYWAY        -> PasteStrategy.Execute.execute(view, text)
             MultilinePasteDialog.Choice.CANCEL              -> Unit

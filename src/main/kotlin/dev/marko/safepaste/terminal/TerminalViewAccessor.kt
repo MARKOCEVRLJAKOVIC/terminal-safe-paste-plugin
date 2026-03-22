@@ -1,8 +1,11 @@
 package dev.marko.safepaste.terminal
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.terminal.frontend.view.TerminalView
 
 object TerminalViewAccessor {
+
+    private val LOG = logger<TerminalViewAccessor>()
 
     fun isBracketedPasteModeActive(view: TerminalView): Boolean =
         runCatching {
@@ -13,11 +16,18 @@ object TerminalViewAccessor {
                 methodName = "getValue"
             )
             stateValue.invokeMethod("isBracketedPasteMode") as Boolean
-        }.getOrDefault(false)
+        }.getOrElse { e ->
+            LOG.warn("SafePaste: could not determine bracketed paste mode via reflection", e)
+            false
+        }
 
     fun sendString(view: TerminalView, text: String) {
-        val terminalInput = view.reflectField("terminalInput")
-        terminalInput.invokeMethod("sendString", String::class.java to text)
+        runCatching {
+            val terminalInput = view.reflectField("terminalInput")
+            terminalInput.invokeMethod("sendString", String::class.java to text)
+        }.onFailure { e ->
+            LOG.warn("SafePaste: sendString via reflection failed", e)
+        }
     }
 
     private fun Any.reflectField(name: String): Any =

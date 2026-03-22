@@ -14,10 +14,22 @@ import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
 class MultilinePasteDialog(
-    private val lines: List<String>
+    private val text: String
 ) : DialogWrapper(true) {
 
     enum class Choice { PASTE_AS_PLAIN_TEXT, PASTE_ANYWAY, CANCEL }
+
+    companion object {
+        /**
+         * Returns the number of non-blank lines in [text] — i.e. the number of
+         * commands that would actually execute. Extracted for testability so the
+         * logic can be verified without instantiating [DialogWrapper].
+         */
+        internal fun countNonBlankLines(text: String): Int =
+            text.lines().count { it.isNotBlank() }
+    }
+
+    private val nonBlankLineCount = countNonBlankLines(text)
 
     var choice: Choice = Choice.CANCEL
         private set
@@ -33,18 +45,18 @@ class MultilinePasteDialog(
         panel.border = JBUI.Borders.empty(8)
 
         val warning = JBLabel(
-            "<html>You are about to paste text that contains <b>${lines.size} lines</b>.<br>" +
+            "<html>You are about to paste text that contains <b>$nonBlankLineCount non-empty lines</b>.<br>" +
                     "If pasted directly into your shell, this may result in unexpected execution of commands.<br><br>" +
                     "Clipboard contents (preview):</html>"
         )
         panel.add(warning, BorderLayout.NORTH)
 
-        val previewText = lines.joinToString("\n")
-        val textArea = JBTextArea(previewText).apply {
+        val textArea = JBTextArea(text).apply {
             isEditable = false
-            rows = minOf(lines.size, 10).coerceAtLeast(1)
+            rows = minOf(nonBlankLineCount, 10).coerceAtLeast(1)
             columns = 60
-            font = JBUI.Fonts.create("JetBrains Mono", 12) ?: font.deriveFont(12f)
+            // JBUI.Fonts.create always returns a non-null font (falls back internally), no ?: needed
+            font = JBUI.Fonts.create("JetBrains Mono", 12)
         }
         val scrollPane = JBScrollPane(textArea).apply {
             horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
@@ -58,17 +70,17 @@ class MultilinePasteDialog(
 
     override fun createActions(): Array<Action> {
         return arrayOf(
-            buildAction("Paste as Plain Text", Choice.PASTE_AS_PLAIN_TEXT),
-            buildAction("Paste anyway", Choice.PASTE_ANYWAY),
-            buildAction("Cancel", Choice.CANCEL),
+            buildAction("Paste as Plain Text", Choice.PASTE_AS_PLAIN_TEXT, OK_EXIT_CODE),
+            buildAction("Paste Anyway (executes each line)", Choice.PASTE_ANYWAY, OK_EXIT_CODE),
+            buildAction("Cancel", Choice.CANCEL, CANCEL_EXIT_CODE),
         )
     }
 
-    private fun buildAction(label: String, result: Choice): Action {
+    private fun buildAction(label: String, result: Choice, exitCode: Int): Action {
         return object : DialogWrapperAction(label) {
             override fun doAction(e: ActionEvent) {
                 choice = result
-                close(CANCEL_EXIT_CODE)
+                close(exitCode)
             }
         }
     }
