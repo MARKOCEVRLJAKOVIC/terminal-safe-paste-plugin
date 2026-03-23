@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>dev.marko.safe-paste</id>
     <name>Safe Paste</name>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 
     <vendor email="marecevrljakovic@gmail.com" url="https://github.com/markocevrljakovic">
         Marko Cevrljakovic
@@ -33,9 +33,10 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <ul>
-            <li><b>1.0.0</b> – Initial release</li>
-        </ul>
+       <ul>
+        <li><b>1.0.1</b> – Add custom plugin logo</li>
+        <li><b>1.0.0</b> – Initial release</li>
+    </ul>
     ]]></change-notes>
 
     <depends>com.intellij.modules.platform</depends>
