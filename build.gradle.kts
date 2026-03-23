@@ -16,7 +16,10 @@ repositories {
 }
 
 dependencies {
+    testImplementation("junit:junit:4.13.2")
+
     intellijPlatform {
+        // 2025.3 for development IDE because intellij.terminal.frontend is supported with 2025.2+
         intellijIdea("2025.3")
         testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
 
@@ -30,7 +33,7 @@ dependencies {
 intellijPlatform {
     pluginConfiguration {
         ideaVersion {
-            sinceBuild = "252.25557"
+            sinceBuild = "253"
         }
 
         changeNotes = """
@@ -39,28 +42,16 @@ intellijPlatform {
     }
 
     pluginVerification {
-        // List every IDE build you want the verifier to check against.
-        // At minimum: the oldest supported build (sinceBuild) and the latest stable.
         ides {
-            ide(org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdeaCommunity, "2024.1")
-            ide(org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdeaCommunity, "2024.2")
-            ide(org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdeaCommunity, "2025.1")
-            ide(org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdeaUltimate, "2025.1")
+            create(org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdeaUltimate, "2025.3")
         }
     }
 
     publishing {
         token = providers.environmentVariable("PUBLISH_TOKEN")
-
-        // Uncomment to publish to a non-default channel (e.g. "beta", "eap"):
-        // channels = listOf(providers.environmentVariable("PLUGIN_CHANNEL").orElse("default"))
     }
 
     signing {
-        // Optional: sign the plugin before publishing.
-        // Requires SIGNING_KEY, SIGNING_KEY_ID, SIGNING_KEY_PASSPHRASE secrets.
-        // See: https://plugins.jetbrains.com/docs/intellij/plugin-signing.html
-        //
         // certificateChain = providers.environmentVariable("SIGNING_CERTIFICATE_CHAIN")
         // privateKey        = providers.environmentVariable("SIGNING_PRIVATE_KEY")
         // password          = providers.environmentVariable("SIGNING_KEY_PASSPHRASE")

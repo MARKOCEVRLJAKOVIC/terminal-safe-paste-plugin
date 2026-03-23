@@ -45,8 +45,16 @@ jobs:
       - name: Build plugin distribution
         run: ./gradlew buildPlugin --no-daemon
 
-      - name: Verify plugin compatibility
+      - name: Verify plugin
         run: ./gradlew verifyPlugin --no-daemon
+
+      - name: Upload Plugin Verifier report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-verifier-report
+          path: build/reports/pluginVerifier/
+          retention-days: 7
 
       - name: Upload plugin artifact
         uses: actions/upload-artifact@v4

@@ -32,7 +32,7 @@ jobs:
       - name: Build plugin distribution
         run: ./gradlew buildPlugin --no-daemon
 
-      - name: Verify plugin compatibility
+      - name: Verify plugin
         run: ./gradlew verifyPlugin --no-daemon
 
       - name: Publish to JetBrains Marketplace
